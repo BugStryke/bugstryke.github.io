@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heroic Naval Defence!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #000;
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 2px solid #000;
+            background-color: #c0c0c0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Heroic Naval Defence!</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        var canvas = document.getElementById('gameCanvas');
+        var ctx = canvas.getContext('2d');
+
+        var keys = {};
+        var shipX = canvas.width / 2;
+        var seaDroneY = 0;
+        var seaDroneX = Math.random() * canvas.width;
+        var ships = 100;
+        var lives = 3;
+        var gameOver = false;
+        var message = "";
+
+        var gameState = 'start'; // start, playing, gameOver
+
+        function drawStartScreen() {
+            ctx.font = '48px Arial';
+            for (var i = 0; i < 'Heroic Naval Defence!'.length; i++) {
+                var char = 'Heroic Naval Defence!'[i];
+                ctx.fillText(char, canvas.width / 2 - 250 + i * 25, canvas.height / 2 - 50 + Math.sin(i) * 10);
+            }
+            ctx.font = '20px Arial';
+            ctx.fillText('Press ENTER to Start', canvas.width / 2, canvas.height / 2);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState === 'start') {
+                drawStartScreen();
+            } else {
+                // Draw ship
+                ctx.fillStyle = 'black';
+                ctx.fillRect(shipX - 8, canvas.height - 16, 16, 16);
+
+                // Draw sea drone
+                ctx.fillRect(seaDroneX - 8, seaDroneY - 8, 16, 16);
+
+                // Draw message
+                ctx.fillStyle = 'black';
+                ctx.font = '20px Arial';
+                if (message.includes('!')) {
+                    var parts = message.split('!');
+                    ctx.fillText(parts[0] + '!', canvas.width / 2, canvas.height / 2 - 20);
+                    ctx.fillText(parts[1], canvas.width / 2, canvas.height / 2);
+                } else {
+                    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+                }
+
+                // Draw remaining ships and lives
+                ctx.font = '14px Arial';
+                ctx.fillText('Ships: ' + ships, 70, 30);
+                ctx.fillText('Lives: ' + lives, 70, 50);
+            }
+        }
+
+        function update() {
+            if (gameState === 'playing' && !gameOver) {
+                // Move ship
+                if (keys['a']) shipX -= 5;
+                if (keys['d']) shipX += 5;
+
+                // Move sea drone
+                seaDroneY += 3;
+
+                // Check for collision
+                if (Math.abs(shipX - seaDroneX) < 16 && seaDroneY > canvas.height - 32) {
+                    message = "Great success! The enemies evil plan was thwarted!";
+                    ships--;
+                    resetSeaDrone();
+                    if (ships <= 90) { // You win after destroying 10 drones
+                        gameOver = true;
+                        message = "That will show the enemy! They must surely be out of sea drones by now! Now for a new glorious five-year plan!";
+                    }
+                }
+
+                // Check for missed sea drone
+                if (seaDroneY > canvas.height) {
+                    message = "You missed!";
+                    lives--;
+                    resetSeaDrone();
+                    if (lives <= 0) {
+                        gameOver = true;
+                        message = "The enemy failed yet again in their attempts to destroy us! Everything is fine!";
+                    }
+                }
+            }
+
+            if (gameOver) {
+                setTimeout(function () {
+                    location.reload();
+                }, 5000); // Wait for 5 seconds before restarting
+            }
+
+            draw();
+        }
+
+        function resetSeaDrone() {
+            seaDroneY = 0;
+            seaDroneX = Math.random() * canvas.width;
+        }
+
+        // Key inputs
+        window.onkeydown = function (e) {
+            keys[e.key] = true;
+
+            // Start the game with Enter key
+            if (e.key === 'Enter' && gameState === 'start') {
+                gameState = 'playing';
+            }
+        };
+
+        window.onkeyup = function (e) {
+            keys[e.key] = false;
+        };
+
+        ctx.textAlign = 'center';
+        setInterval(update, 1000 / 60);
+    </script>
+</body>
+</html>
